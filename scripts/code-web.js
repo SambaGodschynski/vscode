@@ -104,8 +104,8 @@ function handleStatic(req, res, parsedUrl) {
 
 	// Strip `/static/` from the path
 	const relativeFilePath = path.normalize(decodeURIComponent(parsedUrl.pathname.substr('/static/'.length)));
-
-	return serveFile(req, res, path.join(APP_ROOT, relativeFilePath));
+	const filePath = path.join(APP_ROOT, relativeFilePath);
+	return serveFile(req, res, filePath);
 }
 
 /**
@@ -119,7 +119,6 @@ function handleStaticExtension(req, res, parsedUrl) {
 	const relativeFilePath = path.normalize(decodeURIComponent(parsedUrl.pathname.substr('/static-extension/'.length)));
 
 	const filePath = path.join(EXTENSIONS_ROOT, relativeFilePath);
-
 	return serveFile(req, res, filePath);
 }
 
@@ -135,7 +134,9 @@ async function handleRoot(req, res) {
 		try {
 			const packageJSON = JSON.parse((await util.promisify(fs.readFile)(path.join(EXTENSIONS_ROOT, extensionFolder, 'package.json'))).toString());
 			if (packageJSON.main && packageJSON.name !== 'vscode-api-tests') {
-				return; // unsupported
+				if(extensionFolder !== 'werckmeister-codext') {
+					return; // unsupported
+				}
 			}
 
 			if (packageJSON.name === 'scss') {
