@@ -132,9 +132,10 @@ async function handleRoot(req, res) {
 
 	await Promise.all(extensionFolders.map(async extensionFolder => {
 		try {
+			const isWerckmeisterEx = extensionFolder === 'werckmeister-codext';
 			const packageJSON = JSON.parse((await util.promisify(fs.readFile)(path.join(EXTENSIONS_ROOT, extensionFolder, 'package.json'))).toString());
 			if (packageJSON.main && packageJSON.name !== 'vscode-api-tests') {
-				if(extensionFolder !== 'werckmeister-codext') {
+				if(!isWerckmeisterEx) {
 					return; // unsupported
 				}
 			}
@@ -144,7 +145,9 @@ async function handleRoot(req, res) {
 			}
 
 			packageJSON.extensionKind = ['web']; // enable for Web
-
+			if (isWerckmeisterEx) {
+				packageJSON.main = packageJSON.main.replace('extension.js', 'extension-web.js');
+			}
 			mapExtensionFolderToExtensionPackageJSON.set(extensionFolder, packageJSON);
 		} catch (error) {
 			return null;
