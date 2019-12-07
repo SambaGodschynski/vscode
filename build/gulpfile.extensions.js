@@ -40,7 +40,10 @@ const tasks = compilations.map(function (tsconfigFile) {
 	overrideOptions.sourceMap = true;
 
 	const name = relativeDirname.replace(/\//g, '-');
-
+	const isWerckmeisterFile = name.indexOf('werckmeister') >= 0;
+	if (!isWerckmeisterFile) {
+		return;
+	}
 	const root = path.join('extensions', relativeDirname);
 	const srcBase = path.join(root, 'src');
 	const src = path.join(srcBase, '**');
@@ -143,7 +146,8 @@ const tasks = compilations.map(function (tsconfigFile) {
 	gulp.task(watchTask);
 
 	return { compileTask, watchTask, compileBuildTask };
-});
+})
+.filter(x=>!!x);
 
 const compileExtensionsTask = task.define('compile-extensions', task.parallel(...tasks.map(t => t.compileTask)));
 gulp.task(compileExtensionsTask);

@@ -27,6 +27,9 @@ gulp.task(watchClientTask);
 const compileTask = task.define('compile', task.parallel(monacoTypecheckTask, compileClientTask, compileExtensionsTask));
 gulp.task(compileTask);
 
+const compileExtensionTask = task.define('compile-extensions', task.parallel(compileExtensionsTask));
+gulp.task(compileExtensionTask);
+
 gulp.task(task.define('watch', task.parallel(/* monacoTypecheckWatchTask, */ watchClientTask, watchExtensionsTask)));
 
 // Default

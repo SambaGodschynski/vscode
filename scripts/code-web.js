@@ -134,7 +134,7 @@ async function handleRoot(req, res) {
 		try {
 			const isWerckmeisterEx = extensionFolder === 'werckmeister-codext';
 			const packageJSON = JSON.parse((await util.promisify(fs.readFile)(path.join(EXTENSIONS_ROOT, extensionFolder, 'package.json'))).toString());
-			if (packageJSON.main && packageJSON.name !== 'vscode-api-tests') {
+			if (packageJSON.main && packageJSON.name !== 'werckmeister-online') {
 				if(!isWerckmeisterEx) {
 					return; // unsupported
 				}
