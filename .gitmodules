@@ -1,0 +1,3 @@
+[submodule "extensions/werckmeister-codext"]
+	path = extensions/werckmeister-codext
+	url = git@github.com:SambaGodschynski/werckmeister-codext.git
