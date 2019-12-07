@@ -62,6 +62,9 @@ const server = http.createServer((req, res) => {
 			// favicon
 			return serveFile(req, res, path.join(APP_ROOT, 'resources', 'win32', 'code.ico'));
 		}
+		if (pathname === '/werckmeister/me/files') {
+			return handleWerckmeisterGetFiles(req, res);
+		}
 		if (/^\/static\//.test(pathname)) {
 			// static requests
 			return handleStatic(req, res, parsedUrl);
@@ -174,6 +177,15 @@ async function handleRoot(req, res) {
 
 	res.writeHead(200, { 'Content-Type': 'text/html' });
 	return res.end(data);
+}
+
+function handleWerckmeisterGetFiles(req, res) {
+	const files = [{
+		name: 'black-pages.sheet',
+		content: '-- HERE WE ARE'
+	}];
+	res.writeHead(200, { 'Content-Type': 'text/json' });
+	res.end(JSON.stringify(files));
 }
 
 /**
