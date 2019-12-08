@@ -18,6 +18,66 @@ const minimist = require('vscode-minimist');
 const APP_ROOT = path.dirname(__dirname);
 const EXTENSIONS_ROOT = path.join(APP_ROOT, 'extensions');
 const WEB_MAIN = path.join(APP_ROOT, 'src', 'vs', 'code', 'browser', 'workbench', 'workbench-dev.html');
+const WERCKMEISTER_EXAMPLES = path.join(APP_ROOT, 'werckmeister-sheets');
+
+const Sheetfiles = getWerckmeisterSheets();
+
+
+function getWerckmeisterSheets() {
+	const result = {files: []};
+	const base = WERCKMEISTER_EXAMPLES;
+	const _ = require('lodash');
+	var walk = require('walk');
+	var fs = require('fs');
+	const jsonPathIsRoot = (jsonPath) => jsonPath.trim().length === 0;
+	const getJsonFromPath = (jsonPath) => jsonPathIsRoot(jsonPath) ? result : _.get(result, jsonPath);
+	function createDirectories(path) {
+		const segments = path.split('/');
+		//console.log(path, segments);
+		let pointer = result;
+		for (let folder of segments) {
+			if (jsonPathIsRoot(folder) && !pointer.files) {
+				pointer.files = [];
+				continue;
+			}
+			if (!pointer[folder]) {
+				pointer[folder] = {files:[]};
+			}
+			pointer = pointer[folder];
+		}
+	}
+
+	// To be truly synchronous in the emitter and maintain a compatible api,
+	// the listeners must be listed before the object is created
+	const options = {
+		listeners: {
+			file: function (root, fileStats, next) {
+				const isHidden = fileStats.name[0] === '.';
+				if (isHidden) {
+					next();
+					return;
+				}
+				const fullPath = path.join(root);
+				const relPath = path.relative(base, fullPath);
+				const jsonPath = relPath.replace(/\//g, '.');
+				const fullFilePath = path.join(fullPath, fileStats.name);
+				createDirectories(relPath);
+				const dir = getJsonFromPath(jsonPath);
+				dir.files.push({
+					name: fileStats.name,
+					data: fs.readFileSync(fullFilePath, 'utf8')
+				});
+				next();
+			}
+			, errors: function (root, nodeStatsArray, next) {
+				next();
+			}
+		}
+	};
+
+	walk.walkSync(base, options);
+	return result;
+}
 
 const args = minimist(process.argv, {
 	boolean: [
@@ -138,7 +198,7 @@ async function handleRoot(req, res) {
 			const isWerckmeisterEx = extensionFolder === 'werckmeister-codext';
 			const packageJSON = JSON.parse((await util.promisify(fs.readFile)(path.join(EXTENSIONS_ROOT, extensionFolder, 'package.json'))).toString());
 			if (packageJSON.main && packageJSON.name !== 'werckmeister-online') {
-				if(!isWerckmeisterEx) {
+				if (!isWerckmeisterEx) {
 					return; // unsupported
 				}
 			}
@@ -180,12 +240,8 @@ async function handleRoot(req, res) {
 }
 
 function handleWerckmeisterGetFiles(req, res) {
-	const files = [{
-		name: 'black-pages.sheet',
-		content: '-- HERE WE ARE'
-	}];
 	res.writeHead(200, { 'Content-Type': 'text/json' });
-	res.end(JSON.stringify(files));
+	res.end(JSON.stringify(Sheetfiles));
 }
 
 /**

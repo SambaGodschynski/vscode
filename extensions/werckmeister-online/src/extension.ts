@@ -28,17 +28,28 @@ export async function activate(context: vscode.ExtensionContext) {
 
 async function createMyFs(baseUrl: string, memFs: MemFS) {
 	const rqGetFiles = new Request('/werckmeister/me/files');
-	const files = await (await fetch(rqGetFiles)).json();
-	for(let file of files) {
-		memFs.writeFile(vscode.Uri.parse(`${baseUrl}/${file.name}`), textEncoder.encode(file.content), { create: true, overwrite: true });
+	const root = await (await fetch(rqGetFiles)).json();
+	function iterate(dir: any, dirPath: string) {
+		for (let subPath in dir) {
+			const subObj = dir[subPath];
+			if (Array.isArray(subObj)) {
+				continue;
+			}
+			memFs.createDirectory(vscode.Uri.parse(`${dirPath}/${subPath}`));
+			iterate(subObj, `${dirPath}/${subPath}`);
+		}
+		for(let file of dir.files) {
+			memFs.writeFile(vscode.Uri.parse(`${dirPath}/${file.name}`), textEncoder.encode(file.data), { create: true, overwrite: true });
+		}
 	}
+	iterate(root, baseUrl);
 }
 
 async function enableFs(context: vscode.ExtensionContext): Promise<MemFS> {
 	const memFs = new MemFS();
 	context.subscriptions.push(vscode.workspace.registerFileSystemProvider(SCHEME, memFs, { isCaseSensitive: true }));
 	memFs.createDirectory(vscode.Uri.parse(`memfs:/sample-folder/`));
-	await createMyFs('memfs:/sample-folder/', memFs);
+	await createMyFs('memfs:/sample-folder', memFs);
 	return memFs;
 }
 
